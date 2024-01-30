@@ -1,0 +1,90 @@
+from functools import partial
+
+import jax
+import jax.numpy as np
+from jax.numpy.fft import (
+    rfft, irfft, rfftfreq, fft, ifft, fftfreq
+)
+from jax.scipy.integrate import trapezoid
+from scipy.integrate import RK45
+import matplotlib.pyplot as plt
+
+jax.config.update("jax_enable_x64", True)
+jax.config.update("jax_platform_name", "cpu")
+
+
+def gaussian(v):
+    return np.exp(-0.5*v**2)/np.sqrt(2*np.pi)
+
+def f0(x,v):
+    x = x[:,None]
+    return gaussian(v) * (1 + 0.5 * np.cos(2*np.pi*x))
+
+
+class vlasov_poisson:
+    """
+    Fourier discretization for the Vlasov Poisson equation on the periodic domain.
+    Computational domain: [0,T] x [-X, X] x [-V, V].
+    """
+    def __init__(self,
+                 T: float = 1.5,
+                 X: float = 0.5,
+                 V: float = 2*np.pi,
+                 Nx: int = 128,
+                 Nv: int = 256):
+        self.T = T
+        self.X = X
+        self.xx = np.linspace(-X, X, Nx+1)[1:]
+        self.V = V
+        self.vv = np.linspace(-V, V, Nv+1)
+        self.Nx = Nx
+        self.Nv = Nv
+        self.x_ik2pi = 2j * np.pi * fftfreq(Nx, 2*X/Nx)
+        self.v_ik2pi = 2j * np.pi * rfftfreq(Nv, 2*V/Nv)
+
+    def compute_E(self, f):
+        """
+        Computing (Fourier transformed) electric field.
+        """
+        rho = np.maximum(trapezoid(f, dx=2*self.V/self.Nv, axis=-1), 1e-8)
+        m = rho.mean(-1)
+        Ehat = np.hstack([0, rfft(rho-m)[1:] / self.x_ik2pi[1:self.Nx//2+1]])
+        E = irfft(Ehat, self.Nx)
+        return E
+
+    @partial(jax.jit, static_argnums=(0,))
+    def eqn(self, t, fhat):
+        """
+        Discretized Equation.
+        This will be passed to ODE integrators (such as RK45).
+        The variable t is necessary to be passed to.
+
+        ToDo: applying rfft with 2/3 anti-aliasing rule.
+        """
+        fhat = fhat.reshape((self.Nx, -1)) # this may be omitted by using the "tree_math" package.
+        f = irfft(ifft(fhat, axis=0), self.Nv+1)
+        transport_x = - self.x_ik2pi[:,None] * fft(rfft(f * self.vv), axis=0)
+        E = self.compute_E(f)
+        transport_v = - self.v_ik2pi * fft(rfft(f * E[:,None]), axis=0)
+        return (transport_x + transport_v).ravel()
+    
+    def solve(self):
+        """
+        ToDo: status bar.
+        """
+        f0hat = fft(rfft(f0(self.xx, self.vv)), axis=0).ravel()
+        solver = RK45(self.eqn, 0., f0hat, self.T)
+        while solver.status == "running":
+            solver.step()
+        t, fhat = solver.t, solver.y
+        return t, fhat
+    
+
+if __name__ == "__main__":
+    model = vlasov_poisson(T=0.5, Nx=256, Nv=1024)
+    t, fhat = model.solve()
+    f = irfft(ifft(fhat.reshape(model.Nx,-1), axis=0))
+    plt.imshow(f.T, origin='lower', cmap='jet', aspect='auto')
+    plt.axis("off")
+    plt.title(f"time: {t}")
+    plt.savefig("test.png")
