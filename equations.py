@@ -26,6 +26,7 @@ class vlasov_poisson:
     Fourier discretization for the Vlasov Poisson equation on the periodic domain.
     Computational domain: [0,T] x [-X, X] x [-V, V].
     """
+    dim: int = 2
     def __init__(self,
                  T: float = 1.5,
                  X: float = 0.5,
@@ -77,14 +78,64 @@ class vlasov_poisson:
         while solver.status == "running":
             solver.step()
         t, fhat = solver.t, solver.y
-        return t, fhat
+        f = irfft(ifft(fhat, axis=0), self.Nv+1)
+        return t, f
     
 
+class kuramoto_sivashinsky:
+    """
+    Kuramoto-Sivashinsky equation on the periodic domain [0, X].
+    u_t + alpha * u * u_x + beta * u_xx + gamma * u_xxxx = 0.
+    """
+    dim: int = 1
+
+    def __init__(self,
+                 T: float = 1.,
+                 dt: float = None,
+                 X: float = 2*np.pi,
+                 Nx: int = 256,
+                 alpha: float = 100/16,
+                 beta: float = 100/16**2,
+                 gamma: float = 100/16**4,
+                 ):
+        self.T = T
+        self.dt = dt
+        self.X = X
+        self.Nx = Nx
+        self.xx = np.linspace(0., X, Nx, endpoint=False)
+        self.alpha, self.beta, self.gamma = alpha, beta, gamma
+        self.ik2pi = 2j * np.pi * rfftfreq(Nx, X/Nx)
+        
+
+    def u0(self, x):
+        return np.cos(x) * (1 + np.sin(x))
+
+    @partial(jax.jit, static_argnums=(0,))
+    def eqn(self, t, uhat):
+        u = irfft(uhat, self.Nx)
+        uux = self.ik2pi * rfft(0.5 * u**2)
+        uxx = self.ik2pi**2 * uhat
+        uxxxx = self.ik2pi**4 * uhat
+        return - self.alpha * uux - self.beta * uxx - self.gamma * uxxxx
+    
+    def solve(self):
+        u0 = self.u0(self.xx)
+        u0hat = rfft(u0)
+        solver = RK45(self.eqn, 0., u0hat, self.T, max_step=self.dt)
+        uhat_list = [u0hat]
+        while solver.status == "running":
+            solver.step()
+            uhat_list.append(solver.y)
+        return solver.t, uhat_list
+
+
 if __name__ == "__main__":
-    model = vlasov_poisson(T=0.5, Nx=256, Nv=1024)
-    t, fhat = model.solve()
-    f = irfft(ifft(fhat.reshape(model.Nx,-1), axis=0))
-    plt.imshow(f.T, origin='lower', cmap='jet', aspect='auto')
-    plt.axis("off")
+    model = kuramoto_sivashinsky(T=1.0, Nx=256, dt=5e-4)
+    t, uhat_list = model.solve()
+    uhat = np.stack(uhat_list)
+    u = irfft(uhat, model.Nx)
+    plt.imshow(u.T, origin='lower', aspect='auto', cmap='jet', extent=[0,model.T, 0.,model.X])
     plt.title(f"time: {t}")
+    plt.colorbar()
+    plt.tight_layout()
     plt.savefig("test.png")
