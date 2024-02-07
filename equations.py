@@ -13,14 +13,6 @@ jax.config.update("jax_enable_x64", True)
 jax.config.update("jax_platform_name", "cpu")
 
 
-def gaussian(v):
-    return np.exp(-0.5*v**2)/np.sqrt(2*np.pi)
-
-def f0(x,v):
-    x = x[:,None]
-    return gaussian(v) * (1 + 0.5 * np.cos(2*np.pi*x))
-
-
 class vlasov_poisson:
     """
     Fourier discretization for the Vlasov Poisson equation on the periodic domain.
@@ -42,6 +34,14 @@ class vlasov_poisson:
         self.Nv = Nv
         self.x_ik2pi = 2j * np.pi * fftfreq(Nx, 2*X/Nx)
         self.v_ik2pi = 2j * np.pi * rfftfreq(Nv, 2*V/Nv)
+
+    @staticmethod
+    def gaussian(v):
+        return np.exp(-0.5*v**2)/np.sqrt(2*np.pi)
+
+    def f0(self, x, v):
+        x = x[:,None]
+        return self.gaussian(v) * (1 + 0.5 * np.cos(2*np.pi*x))
 
     def compute_E(self, f):
         """
@@ -73,7 +73,7 @@ class vlasov_poisson:
         """
         ToDo: status bar.
         """
-        f0hat = fft(rfft(f0(self.xx, self.vv)), axis=0).ravel()
+        f0hat = fft(rfft(self.f0(self.xx, self.vv)), axis=0).ravel()
         solver = RK45(self.eqn, 0., f0hat, self.T)
         while solver.status == "running":
             solver.step()
@@ -130,11 +130,11 @@ class kuramoto_sivashinsky:
 
 
 if __name__ == "__main__":
-    model = kuramoto_sivashinsky(T=1.0, Nx=256, dt=5e-4)
+    model = kuramoto_sivashinsky(T=1., Nx=1024, dt=5e-4)
     t, uhat_list = model.solve()
     uhat = np.stack(uhat_list)
     u = irfft(uhat, model.Nx)
-    plt.imshow(u.T, origin='lower', aspect='auto', cmap='jet', extent=[0,model.T, 0.,model.X])
+    plt.imshow(u.T, origin='lower', aspect='auto', cmap='jet', extent=[0, model.T, model.X, 0])
     plt.title(f"time: {t}")
     plt.colorbar()
     plt.tight_layout()
