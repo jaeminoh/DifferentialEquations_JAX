@@ -1,7 +1,18 @@
+---
+title: "Fourier Transform"
+author: "Jaemin Oh"
+date: \today{}
+geometry: margin=3cm
+fontsize: 12pt
+---
+
+
 # Fourier Transform.
 
 In November 2023, I implemented a code to solve Kuramoto-Sivashinsky equation with Fourier pseudo-spectral method.
-That was really fun, since the code was really fast, easy to read, and producing realistic plots. [Kuramoto-Sivashinsky, ETDRK4](../codes/kursiv.pdf)
+That was really fun, since the code was really fast, easy to read, and producing realistic plots. 
+
+![Kuramoto-Sivashinsky, ETDRK4](../figures/kursiv.png)
 
 At first, I was little confused about definitions of Fourier transform which was taught in real analysis course and discrete Fourier transform, a discrete algorithm for Fourier transform.
 In this short article, we'll remove the confusion via intuitive explanation.
@@ -9,9 +20,9 @@ In this short article, we'll remove the confusion via intuitive explanation.
 Let's start from the most general definition.
 Let $f \in L^1(\mathbb{R})$.
 Then its Fourier transform is defined by
-$$\hat{f}(\xi) := \int_\mathbb{R} f(x)e^{-i2\pi \xi x}dx.$$
+$$\hat{f}(\xi) = \int_\mathbb{R} f(x)e^{-i 2 \pi \xi x} dx.$$
 The inverse transform defined by
-$$\int_\mathbb{R} \hat{f}(\xi) e^{i2\pi \xi x }d\xi \rightarrow f$$
+$$\int_\mathbb{R} \hat{f}(\xi) e^{i 2 \pi \xi x } d\xi \rightarrow f$$
 converges to $f$ in $L^2$ sense.
 This provides a lot of convenient tools for analysis, yet hard to compute, since the domain is infinite.
 

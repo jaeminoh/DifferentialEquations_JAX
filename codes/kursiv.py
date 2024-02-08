@@ -58,10 +58,9 @@ for n in range(nmax):
 vv = np.stack(vv)
 uu = irfft(vv, Nx, axis=-1)
 
-plt.imshow(uu.T, origin='lower', aspect='auto', extent=[0, tmax, 32*np.pi, 0])
+plt.imshow(uu.T, origin='lower', aspect='auto', cmap='jet', extent=[0, tmax, 32*np.pi, 0])
 plt.xlabel(r"$t$")
 plt.ylabel(r"$x$")
-plt.title("Kuramoto-Sivashinsky, ETDRK4")
 plt.colorbar()
 plt.tight_layout()
-plt.savefig("kursiv.pdf", format="pdf")
+plt.savefig("../figures/kursiv.png", format="png")

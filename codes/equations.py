@@ -130,7 +130,7 @@ class kuramoto_sivashinsky:
 
 
 if __name__ == "__main__":
-    model = kuramoto_sivashinsky(T=1., Nx=1024, dt=5e-4)
+    model = kuramoto_sivashinsky(T=1.5, Nx=1024, dt=5e-4)
     t, uhat_list = model.solve()
     uhat = np.stack(uhat_list)
     u = irfft(uhat, model.Nx)
