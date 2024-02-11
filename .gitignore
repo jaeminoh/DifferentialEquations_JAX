@@ -1,8 +1,10 @@
 # data related
+figures/
+_notebooks/
 *.md
 !README.md
 *.npy
-_notebooks/
+*.sh
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
