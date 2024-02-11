@@ -10,7 +10,7 @@ jax.config.update("jax_enable_x64", True)
 jax.config.update("jax_platform_name", "cpu")
 
 # spatial grid and initial condition
-Nx = 128
+Nx = 256
 xx = np.linspace(0, 32*np.pi, Nx+1)[1:]
 u = np.cos(xx/16) * (1 + np.sin(xx/16))
 v = rfft(u)
@@ -24,7 +24,7 @@ E = np.exp(h * L)
 E2 = np.exp(h * L / 2)
 M = 16
 r = np.exp(1j * np.pi * np.arange(1 - 0.5, M + 1 - 0.5) / M)
-LR = L[:,None] + r
+LR = h * L[:,None] + r
 Q  = h * ((np.exp(LR / 2) - 1) / LR).mean(1).real
 f1 = h * ((-4 - LR + np.exp(LR) * (4 -3 * LR + LR**2)) / LR**3).mean(1).real
 f2 = h * ((2 + LR + np.exp(LR) * (-2 + LR)) / LR**3).mean(1).real
@@ -34,7 +34,7 @@ vv = [v]
 tt = [0.]
 tmax = 150.
 nmax = int(150 // h)
-nplt = nmax // 100
+nplt = nmax // 200
 
 @jax.jit
 @jax.checkpoint
