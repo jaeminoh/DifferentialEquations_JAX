@@ -16,7 +16,7 @@ from jaxopt import OptaxSolver
 from tqdm import trange
 import matplotlib.pyplot as plt
 
-from nn import MLP
+from src.nn import MLP
 
 
 def to_column(lst):
