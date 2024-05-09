@@ -73,8 +73,8 @@ uu = irfft(vv, Nx, axis=-1)
 plt.imshow(
     uu, origin="lower", aspect="auto", cmap="jet", extent=[0, 32 * np.pi, 0, tmax]
 )
-plt.xlabel(r"$t$")
-plt.ylabel(r"$x$")
+plt.xlabel(r"$x$")
+plt.ylabel(r"$t$")
 plt.colorbar()
 plt.tight_layout()
 plt.savefig("../figures/kursiv_dealiased.png", format="png")
