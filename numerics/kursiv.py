@@ -33,8 +33,8 @@ f3 = h * ((-4 - 3 * LR - LR**2 + np.exp(LR) * (4 - LR)) / LR**3).mean(1).real
 
 vv = [v]
 tt = [0.0]
-tmax = 150.0
-nmax = int(150 // h)
+tmax = 10000
+nmax = int(tmax // h)
 nplt = nmax // 200
 
 
@@ -68,4 +68,4 @@ plt.xlabel(r"$x$")
 plt.ylabel(r"$t$")
 plt.colorbar()
 plt.tight_layout()
-plt.savefig("../figures/kursiv.png", format="png")
+plt.savefig("../figures/kursiv.pdf", format="pdf")
