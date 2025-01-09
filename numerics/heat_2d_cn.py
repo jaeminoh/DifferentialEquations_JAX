@@ -50,6 +50,7 @@ def conv_mat(N, a, b):
 
 def main(N: int = 50, dt: float = 1e-3, maxiter: int = 1000):
     # grid
+    print(f"N: {N}, dt: {dt}, iters: {maxiter}")
     scale = 2.5
 
     x = scale * np.linspace(-1, 1, N) 
@@ -80,11 +81,11 @@ def main(N: int = 50, dt: float = 1e-3, maxiter: int = 1000):
     print("2. Generate discretization matrices")
 
     def padding(u):
-        u0_ = u[0]
-        uN_ = u[-1]
+        u0_ = np.zeros_like(u[0])
+        uN_ = np.zeros_like(u[-1])
         u = np.vstack([u0_, u, uN_])
-        u_0 = u[:, 0]
-        u_N = u[:, -1]
+        u_0 = np.zeros_like(u[:, 0])
+        u_N = np.zeros_like(u[:, -1])
         u = np.concatenate([u_0[:, None], u, u_N[:, None]], 1)
         return u
 
